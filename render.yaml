@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: hudson-county-investigative-db
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app

@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Trace ownership of Hudson County housing</h1>
+<p class="lede">
+  Aggregated data for Hudson County: 2024 HMDA mortgage information, census tract-level FFIEC income
+  classifications, the National Housing Preservation Database (NHPD) for housing subsidies and private
+  property-ownership/sales context with NJ Modular Four (MOD-IV). Use cases: surfacing private creditors,
+  LLCs and ownership patterns in Hudson County, NJ, particularly for use in research into affordable
+  housing ownership.
+</p>
+<p class="hint">{{ "{:,}".format(dataset_total) }} records. Search by census tract, owner, or building name, and use <strong>Customize columns</strong> below to build the view you need.</p>
+
+<form class="search-form" method="get" action="{{ url_for('index') }}">
+  {% if args.get('sort') %}<input type="hidden" name="sort" value="{{ args.get('sort') }}">{% endif %}
+  {% if args.get('dir') %}<input type="hidden" name="dir" value="{{ args.get('dir') }}">{% endif %}
+  <div class="search-row">
+    <input type="text" name="q" placeholder="Search census tract, property name, or owner&hellip;" value="{{ args.get('q', '') }}">
+    <button type="submit">Search</button>
+    <a class="clear-link" href="{{ url_for('index') }}">Clear all filters</a>
+  </div>
+
+  <details class="filters" {% if args|length > (1 if args.get('q') else 0) %}open{% endif %}>
+    <summary>Ownership &amp; lending filters</summary>
+    <div class="filter-grid">
+      <label>Ownership profile
+        <select name="ownership_profile">
+          <option value="">Any</option>
+          {% for v in options.ownership_profile %}
+          <option value="{{ v }}" {% if args.get('ownership_profile')==v %}selected{% endif %}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Tract income level
+        <select name="tract_income_level">
+          <option value="">Any</option>
+          {% for v in options.tract_income_level %}
+          <option value="{{ v }}" {% if args.get('tract_income_level')==v %}selected{% endif %}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Min. out-of-area owner parcels
+        <input type="number" name="out_of_area_min" value="{{ args.get('out_of_area_min', '') }}">
+      </label>
+      <label>Min. avg. parcels per owner
+        <input type="number" step="0.1" name="concentration_min" value="{{ args.get('concentration_min', '') }}">
+      </label>
+      <label>Min. subsidized units in tract
+        <input type="number" name="nhpd_units_min" value="{{ args.get('nhpd_units_min', '') }}">
+      </label>
+      <label>Race
+        <select name="derived_race">
+          <option value="">Any</option>
+          {% for v in options.derived_race %}
+          <option value="{{ v }}" {% if args.get('derived_race')==v %}selected{% endif %}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Ethnicity
+        <select name="derived_ethnicity">
+          <option value="">Any</option>
+          {% for v in options.derived_ethnicity %}
+          <option value="{{ v }}" {% if args.get('derived_ethnicity')==v %}selected{% endif %}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Sex
+        <select name="derived_sex">
+          <option value="">Any</option>
+          {% for v in options.derived_sex %}
+          <option value="{{ v }}" {% if args.get('derived_sex')==v %}selected{% endif %}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Loan outcome
+        <select name="action">
+          <option value="">Any</option>
+          {% for v in options.action %}
+          <option value="{{ v }}" {% if args.get('action')==v %}selected{% endif %}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Denial reason
+        <select name="denial_reason_1">
+          <option value="">Any</option>
+          {% for v in options.denial_reason_1 %}
+          <option value="{{ v }}" {% if args.get('denial_reason_1')==v %}selected{% endif %}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Applicant income ($000s) min
+        <input type="number" name="income_min" value="{{ args.get('income_min', '') }}">
+      </label>
+      <label>Applicant income ($000s) max
+        <input type="number" name="income_max" value="{{ args.get('income_max', '') }}">
+      </label>
+      <label>Tract minority % min
+        <input type="number" name="minority_min" value="{{ args.get('minority_min', '') }}">
+      </label>
+      <label>Tract minority % max
+        <input type="number" name="minority_max" value="{{ args.get('minority_max', '') }}">
+      </label>
+    </div>
+    <button type="submit">Apply filters</button>
+  </details>
+
+  <details class="filters">
+    <summary>Customize columns</summary>
+    <p class="hint">Census tract is always shown as the join key. Pick whichever other columns matter for this investigation &mdash; your selection carries through search, sort, and CSV export.</p>
+    <div class="column-picker">
+      {% for group in column_groups %}
+      <fieldset>
+        <legend>{{ group.label }}</legend>
+        {% for col in group.columns %}
+        <label class="checkbox-label">
+          <input type="checkbox" name="cols" value="{{ col.key }}" {% if col.key in selected_cols %}checked{% endif %}>
+          {{ col.label }}
+        </label>
+        {% endfor %}
+      </fieldset>
+      {% endfor %}
+    </div>
+    <div class="column-picker-actions">
+      <button type="submit">Apply columns</button>
+      <a class="clear-link" href="?{{ merge_args(cols=None) }}">Reset to default columns</a>
+    </div>
+  </details>
+</form>
+
+<div class="results-bar">
+  <p>{{ "{:,}".format(total) }} matching record{{ "s" if total != 1 }}</p>
+  <span class="export-links">
+    <a class="button" href="{{ url_for('export_csv') }}?{{ merge_args(page=None, scope='visible') }}">Export visible columns</a>
+    <a class="button secondary" href="{{ url_for('export_csv') }}?{{ merge_args(page=None, scope='all') }}">Export all columns</a>
+  </span>
+</div>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr>
+      {% for col in columns %}
+      <th><a href="{{ sort_link(col.key, col.type) }}">{{ col.label }}{{ sort_indicator(col.key) }}</a></th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      {% for col in columns %}<td>{{ row[col.key] if row[col.key] is not none else '—' }}</td>{% endfor %}
+    </tr>
+    {% else %}
+    <tr><td colspan="{{ columns|length }}" class="empty">No records match these filters.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<nav class="pagination">
+  {% if page > 1 %}
+    <a href="?{{ merge_args(page=1) }}">&laquo; First</a>
+    <a href="?{{ merge_args(page=page-1) }}">&lsaquo; Prev</a>
+  {% endif %}
+  <span>Page {{ page }} of {{ total_pages }}</span>
+  {% if page < total_pages %}
+    <a href="?{{ merge_args(page=page+1) }}">Next &rsaquo;</a>
+    <a href="?{{ merge_args(page=total_pages) }}">Last &raquo;</a>
+  {% endif %}
+</nav>
+{% endblock %}

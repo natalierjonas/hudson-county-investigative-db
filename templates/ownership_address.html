@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="{{ url_for('ownership') }}">&larr; Back to Unmask ownership</a></p>
+<h1>Parcels registered to: {{ mailing_key }}</h1>
+<p class="lede">{{ "{:,}".format(parcels|length) }} apartment parcel{{ 's' if parcels|length != 1 }} in Hudson County are registered to this mailing address.</p>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Property location</th><th>Municipality</th><th>Census tract</th><th>Units</th>
+        <th>Last sale price</th><th>Deed date</th><th>Out-of-state owner</th><th>Land value</th><th>Net value</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in parcels %}
+      <tr>
+        <td>{{ p['prop_loc'] or '—' }}</td>
+        <td>{{ p['mun_name'] or '—' }}</td>
+        <td>{{ p['census_tract'] or '—' }}</td>
+        <td>{{ p['dwell'] if p['dwell'] is not none else '—' }}</td>
+        <td>{{ "${:,}".format(p['sale_price']) if p['sale_price'] else '—' }}</td>
+        <td>{{ p['deed_date'] or '—' }}</td>
+        <td>{{ p['out_of_state_owner'] or '—' }}</td>
+        <td>{{ "${:,}".format(p['land_val']) if p['land_val'] else '—' }}</td>
+        <td>{{ "${:,}".format(p['net_value']) if p['net_value'] else '—' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="9" class="empty">No parcels found for this mailing address.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

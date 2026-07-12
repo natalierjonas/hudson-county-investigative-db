@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Unmask ownership</h1>
+<p class="lede">
+  Two views, because the two source datasets give different levels of transparency. Subsidized housing
+  (NHPD) reports real owner and manager names. General private housing (MOD-IV) does not include owner
+  names in this extract &mdash; so that section instead surfaces <strong>shared mailing addresses</strong>,
+  the standard signal for a single owner (often an LLC or a registered agent) controlling many parcels
+  under different names. See the <a href="{{ url_for('methodology') }}">methodology page</a> for details.
+</p>
+
+<section class="ownership-section">
+  <h2>Subsidized housing owners &amp; managers (real names, NHPD)</h2>
+  <form class="search-form" method="get" action="{{ url_for('ownership') }}#nhpd">
+    {% if args.get('nsort') %}<input type="hidden" name="nsort" value="{{ args.get('nsort') }}">{% endif %}
+    {% if args.get('ndir') %}<input type="hidden" name="ndir" value="{{ args.get('ndir') }}">{% endif %}
+    {% if args.get('aq') %}<input type="hidden" name="aq" value="{{ args.get('aq') }}">{% endif %}
+    {% if args.get('min_parcels') %}<input type="hidden" name="min_parcels" value="{{ args.get('min_parcels') }}">{% endif %}
+    {% if args.get('asort') %}<input type="hidden" name="asort" value="{{ args.get('asort') }}">{% endif %}
+    {% if args.get('adir') %}<input type="hidden" name="adir" value="{{ args.get('adir') }}">{% endif %}
+    <div class="search-row">
+      <input type="text" name="nq" placeholder="Search owner, manager, or property name/address&hellip;" value="{{ args.get('nq', '') }}">
+      <button type="submit">Search</button>
+    </div>
+    <div class="filter-grid">
+      <label>Owner type
+        <select name="owner_type">
+          <option value="">Any</option>
+          {% for v in owner_types %}
+          <option value="{{ v }}" {% if args.get('owner_type')==v %}selected{% endif %}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Property status
+        <select name="property_status">
+          <option value="">Any</option>
+          {% for v in property_statuses %}
+          <option value="{{ v }}" {% if args.get('property_status')==v %}selected{% endif %}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+    <button type="submit">Apply</button>
+  </form>
+
+  <p class="results-count">{{ "{:,}".format(n_total) }} matching propert{{ 'y' if n_total == 1 else 'ies' }}</p>
+
+  <div class="table-wrap" id="nhpd">
+    <table>
+      <thead>
+        <tr>
+          {% for key, label, type in nhpd_columns %}
+          <th><a href="{{ sort_link_for('n', key, type, nhpd_default_sort) }}#nhpd">{{ label }}{{ sort_indicator_for('n', key, nhpd_default_sort) }}</a></th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in nhpd_rows %}
+        <tr>
+          {% for key, label, type in nhpd_columns %}<td>{{ row[key] if row[key] is not none else '—' }}</td>{% endfor %}
+        </tr>
+        {% else %}
+        <tr><td colspan="{{ nhpd_columns|length }}" class="empty">No properties match these filters.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <nav class="pagination">
+    {% if n_page > 1 %}<a href="?{{ merge_args(npage=n_page-1) }}#nhpd">&lsaquo; Prev</a>{% endif %}
+    <span>Page {{ n_page }} of {{ n_total_pages }}</span>
+    {% if n_page < n_total_pages %}<a href="?{{ merge_args(npage=n_page+1) }}#nhpd">Next &rsaquo;</a>{% endif %}
+  </nav>
+</section>
+
+<section class="ownership-section">
+  <h2>Private housing ownership concentration (MOD-IV)</h2>
+  <p class="hint">
+    Each row is a mailing address, grouped across every apartment parcel registered to it &mdash; the more
+    parcels/units at one address, the more likely it's a single owner, LLC, or registered agent controlling
+    multiple properties. Click a row to see the individual parcels behind it.
+  </p>
+  <form class="search-form" method="get" action="{{ url_for('ownership') }}#modiv">
+    {% if args.get('nq') %}<input type="hidden" name="nq" value="{{ args.get('nq') }}">{% endif %}
+    {% if args.get('owner_type') %}<input type="hidden" name="owner_type" value="{{ args.get('owner_type') }}">{% endif %}
+    {% if args.get('property_status') %}<input type="hidden" name="property_status" value="{{ args.get('property_status') }}">{% endif %}
+    {% if args.get('nsort') %}<input type="hidden" name="nsort" value="{{ args.get('nsort') }}">{% endif %}
+    {% if args.get('ndir') %}<input type="hidden" name="ndir" value="{{ args.get('ndir') }}">{% endif %}
+    <div class="search-row">
+      <input type="text" name="aq" placeholder="Search mailing address&hellip;" value="{{ args.get('aq', '') }}">
+      <input type="number" name="min_parcels" placeholder="Min. parcels" value="{{ args.get('min_parcels', '') }}" style="max-width: 140px;">
+      <button type="submit">Apply</button>
+    </div>
+  </form>
+
+  <p class="results-count">{{ "{:,}".format(a_total) }} matching mailing address{{ 'es' if a_total != 1 }}</p>
+
+  <div class="table-wrap" id="modiv">
+    <table>
+      <thead>
+        <tr>
+          {% for key, label, type in addr_columns %}
+          <th><a href="{{ sort_link_for('a', key, type, addr_default_sort) }}#modiv">{{ label }}{{ sort_indicator_for('a', key, addr_default_sort) }}</a></th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in addr_rows %}
+        <tr>
+          <td><a href="{{ url_for('ownership_address_detail', mailing_key=row['owner_mailing_key']) }}">{{ row['owner_mailing_key'] }}</a></td>
+          <td>{{ row['parcel_count'] }}</td>
+          <td>{{ row['total_units'] if row['total_units'] is not none else '—' }}</td>
+          <td>{{ row['tract_count'] }}</td>
+          <td>{{ row['out_of_state_count'] }}</td>
+          <td style="white-space: normal;">{{ row['cities'] or '—' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="{{ addr_columns|length }}" class="empty">No mailing addresses match these filters.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <nav class="pagination">
+    {% if a_page > 1 %}<a href="?{{ merge_args(apage=a_page-1) }}#modiv">&lsaquo; Prev</a>{% endif %}
+    <span>Page {{ a_page }} of {{ a_total_pages }}</span>
+    {% if a_page < a_total_pages %}<a href="?{{ merge_args(apage=a_page+1) }}#modiv">Next &rsaquo;</a>{% endif %}
+  </nav>
+</section>
+{% endblock %}

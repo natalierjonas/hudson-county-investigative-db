@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Hudson County, NJ Housing Ownership Tracker{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Chakra+Petch:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand-block" href="{{ url_for('index') }}">
+        <span class="brand">Hudson County, NJ Housing Ownership Tracker</span>
+        <span class="subhead">For public use and journalistic investigation.</span>
+      </a>
+      <nav>
+        <a href="{{ url_for('index') }}">Search</a>
+        <a href="{{ url_for('ownership') }}">Unmask ownership</a>
+        <a href="{{ url_for('methodology') }}">Methodology &amp; columns</a>
+      </nav>
+    </div>
+  </header>
+  <main class="wrap">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="wrap">
+    <p>Internal investigation tool: 2024 HMDA mortgage applications for Hudson County, NJ merged with FFIEC tract income data, NHPD subsidized-housing ownership records, and MOD-IV property-assessment/sales data, to trace private creditors, LLCs, and private ownership of affordable and general housing. See the <a href="{{ url_for('methodology') }}">methodology page</a> for sourcing and a full column reference.</p>
+  </footer>
+</body>
+</html>

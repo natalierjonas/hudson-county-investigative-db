@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Methodology</h1>
+
+<section class="prose">
+  {{ methodology_html | safe }}
+
+  <h2>Column reference</h2>
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>Column</th><th>Granularity</th><th>Note</th></tr>
+    </thead>
+    <tbody>
+      {% for col in column_metadata %}
+      <tr>
+        <td><code>{{ col['column_name'] }}</code></td>
+        <td>{{ col['granularity'] }}</td>
+        <td style="white-space: normal;">{{ col['note'] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="interactive">
+  <h2>See how filtering changes the result count</h2>
+  <p>Adjust the filters below to see, live, how each one narrows the {{ "{:,}".format(dataset_total) }} records down.</p>
+
+  <div class="filter-grid">
+    <label>Ownership profile
+      <select id="demo-ownership">
+        <option value="">Any</option>
+        {% for v in options.ownership_profile %}<option value="{{ v }}">{{ v }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Race
+      <select id="demo-race">
+        <option value="">Any</option>
+        {% for v in options.derived_race %}<option value="{{ v }}">{{ v }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Outcome
+      <select id="demo-action">
+        <option value="">Any</option>
+        {% for v in options.action %}<option value="{{ v }}">{{ v }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Tract income level
+      <select id="demo-tract">
+        <option value="">Any</option>
+        {% for v in options.tract_income_level %}<option value="{{ v }}">{{ v }}</option>{% endfor %}
+      </select>
+    </label>
+  </div>
+
+  <div class="count-display">
+    <div class="bar"><div id="demo-bar" class="bar-fill" style="width:100%"></div></div>
+    <p id="demo-count-text">Loading&hellip;</p>
+  </div>
+
+  <p><a id="demo-search-link" href="{{ url_for('index') }}">Open these filters in Search &rarr;</a></p>
+</section>
+
+<script>
+const ownershipSel = document.getElementById('demo-ownership');
+const raceSel = document.getElementById('demo-race');
+const actionSel = document.getElementById('demo-action');
+const tractSel = document.getElementById('demo-tract');
+const bar = document.getElementById('demo-bar');
+const text = document.getElementById('demo-count-text');
+const searchLink = document.getElementById('demo-search-link');
+const searchBase = searchLink.getAttribute('href');
+
+async function refresh() {
+  const params = new URLSearchParams();
+  if (ownershipSel.value) params.set('ownership_profile', ownershipSel.value);
+  if (raceSel.value) params.set('derived_race', raceSel.value);
+  if (actionSel.value) params.set('action', actionSel.value);
+  if (tractSel.value) params.set('tract_income_level', tractSel.value);
+
+  const res = await fetch('{{ url_for("api_count") }}?' + params.toString());
+  const data = await res.json();
+  const pct = data.dataset_total ? (100 * data.count / data.dataset_total) : 0;
+  bar.style.width = pct.toFixed(2) + '%';
+  text.textContent = data.count.toLocaleString() + ' of ' + data.dataset_total.toLocaleString() +
+    ' records match (' + pct.toFixed(1) + '%)';
+  searchLink.setAttribute('href', searchBase + (params.toString() ? '?' + params.toString() : ''));
+}
+
+[ownershipSel, raceSel, actionSel, tractSel].forEach(el => el.addEventListener('change', refresh));
+refresh();
+</script>
+{% endblock %}
