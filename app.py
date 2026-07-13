@@ -5,12 +5,30 @@ import sqlite3
 from urllib.parse import urlencode
 
 import markdown
-from flask import Flask, g, render_template, request, Response, jsonify
+from flask import Flask, abort, g, render_template, request, Response, jsonify
 
 DATABASE = "databasesapp.db"
 METHODOLOGY_MD = "content/methodology.md"
 PER_PAGE = 25
 MAX_PER_PAGE = 100
+
+DOWNLOADS = {
+    "loans": {
+        "filename": "hudson_county_housing_2024.csv",
+        "label": "Full loan-level dataset",
+        "description": "Every 2024 HMDA mortgage application record for Hudson County, joined to its census tract's FFIEC income classification, NHPD subsidized-housing counts, and MOD-IV property data. One row per loan application.",
+    },
+    "nhpd_properties": {
+        "filename": "hudson_county_nhpd_properties.csv",
+        "label": "Subsidized housing owners (NHPD)",
+        "description": "Every NHPD-tracked subsidized property in Hudson County, one row per property, with its real owner name, owner type, manager, unit count, and subsidy status.",
+    },
+    "parcel_ownership": {
+        "filename": "hudson_county_parcel_ownership.csv",
+        "label": "Apartment parcel ownership (MOD-IV)",
+        "description": "Every Hudson County apartment parcel from NJ's MOD-IV tax assessment data, one row per parcel, with its mailing address, sale/deed history, and out-of-state owner flag.",
+    },
+}
 
 PINNED_COLUMN = "census_tract"
 
@@ -384,6 +402,38 @@ def create_app():
             dataset_total=dataset_total,
             column_metadata=column_metadata,
             methodology_html=methodology_html,
+        )
+
+    @app.route("/download")
+    def download_page():
+        db = get_db()
+        datasets = []
+        for key, meta in DOWNLOADS.items():
+            count = db.execute(f"SELECT COUNT(*) FROM {key}").fetchone()[0]
+            datasets.append({**meta, "key": key, "count": count})
+        column_metadata = db.execute(
+            "SELECT column_name, granularity, note FROM column_metadata"
+        ).fetchall()
+        return render_template("download.html", datasets=datasets, column_metadata=column_metadata)
+
+    @app.route("/download/<dataset_key>.csv")
+    def download_csv(dataset_key):
+        if dataset_key not in DOWNLOADS:
+            abort(404)
+        db = get_db()
+        columns = [r[1] for r in db.execute(f"PRAGMA table_info({dataset_key})").fetchall()]
+        rows = db.execute(f"SELECT * FROM {dataset_key} ORDER BY rowid").fetchall()
+
+        buffer = io.StringIO()
+        writer = csv.writer(buffer)
+        writer.writerow(columns)
+        for row in rows:
+            writer.writerow(list(row))
+
+        return Response(
+            buffer.getvalue(),
+            mimetype="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={DOWNLOADS[dataset_key]['filename']}"},
         )
 
     @app.route("/ownership")

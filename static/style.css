@@ -213,6 +213,23 @@ button:hover, .button:hover { opacity: 0.9; }
 .results-count { color: var(--muted); margin: 0.75rem 0; }
 .export-links { display: flex; gap: 0.5rem; }
 
+.download-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.download-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+}
+
+.download-card h2 { margin-top: 0; font-size: 1.05rem; }
+.download-card p { color: var(--muted); font-size: 0.9rem; }
+
 .table-wrap {
   overflow-x: auto;
   border: 1px solid var(--border);

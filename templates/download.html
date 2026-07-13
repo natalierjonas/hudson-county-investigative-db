@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Download the data</h1>
+<p class="lede">
+  Full, unfiltered datasets behind this tool, for anyone who wants to run their own analysis outside
+  this site. If you only need a subset, the <a href="{{ url_for('index') }}">Search</a> page's CSV
+  export lets you download just your filtered results instead.
+</p>
+
+<div class="download-grid">
+  {% for d in datasets %}
+  <div class="download-card">
+    <h2>{{ d.label }}</h2>
+    <p>{{ d.description }}</p>
+    <p class="results-count">{{ "{:,}".format(d.count) }} rows</p>
+    <a class="button" href="{{ url_for('download_csv', dataset_key=d.key) }}">Download {{ d.filename }}</a>
+  </div>
+  {% endfor %}
+</div>
+
+<section class="prose">
+  <h2>Documentation: full loan-level dataset columns</h2>
+  <p>Every column in the full loan-level dataset, and whether it describes one specific loan application or the whole census tract it's in (see the <a href="{{ url_for('methodology') }}">methodology page</a> for why that distinction matters):</p>
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>Column</th><th>Granularity</th><th>Note</th></tr>
+    </thead>
+    <tbody>
+      {% for col in column_metadata %}
+      <tr>
+        <td><code>{{ col['column_name'] }}</code></td>
+        <td>{{ col['granularity'] }}</td>
+        <td style="white-space: normal;">{{ col['note'] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+
+  <h2>Documentation: subsidized housing owners (NHPD) columns</h2>
+  <ul>
+    <li><code>nhpd_property_id</code>, <code>property_name</code>, <code>property_address</code>, <code>city</code>, <code>state</code>, <code>zip</code>, <code>census_tract</code> &mdash; property identity and location.</li>
+    <li><code>property_status</code>, <code>active_subsidies</code>, <code>total_inactive_subsidies</code>, <code>total_units</code> &mdash; current subsidy status and unit count.</li>
+    <li><code>owner</code>, <code>owner_type</code> &mdash; the real legal owner name and type (For Profit / Non-Profit / Public Entity / Limited Dividend / Multiple).</li>
+    <li><code>manager_name</code>, <code>manager_type</code> &mdash; the property management company, which may differ from the owner.</li>
+    <li><code>earliest_start_date</code>, <code>latest_end_date</code> &mdash; the subsidy program's date range.</li>
+  </ul>
+
+  <h2>Documentation: apartment parcel ownership (MOD-IV) columns</h2>
+  <ul>
+    <li><code>prop_loc</code>, <code>mun_name</code>, <code>block</code>, <code>lot</code>, <code>census_tract</code> &mdash; the parcel's location and tax identifiers.</li>
+    <li><code>st_address</code>, <code>city_state</code>, <code>zip_code</code>, <code>owner_mailing_key</code> &mdash; the owner's mailing address as recorded by NJ's tax assessor. <strong>Owner name is not available in this extract</strong> &mdash; see the methodology page.</li>
+    <li><code>land_val</code>, <code>imprvt_val</code>, <code>net_value</code> &mdash; assessed property values.</li>
+    <li><code>sale_price</code>, <code>deed_date</code> &mdash; the most recent recorded sale, if any.</li>
+    <li><code>yr_constr</code>, <code>dwell</code> &mdash; year built and number of dwelling units.</li>
+    <li><code>out_of_state_owner</code> &mdash; whether the mailing address is outside New Jersey.</li>
+  </ul>
+</section>
+{% endblock %}
