@@ -1,14 +1,17 @@
 import csv
 import io
 import math
+import os
 import sqlite3
 from urllib.parse import urlencode
 
 import markdown
 from flask import Flask, abort, g, render_template, request, Response, jsonify
 
-DATABASE = "databasesapp.db"
-METHODOLOGY_MD = "content/methodology.md"
+# Dynamic path to ensure it works locally and on Render
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE = os.path.join(BASE_DIR, "databasesapp.db")
+METHODOLOGY_MD = os.path.join(BASE_DIR, "content", "methodology.md")
 PER_PAGE = 25
 MAX_PER_PAGE = 100
 
