@@ -1,6 +1,6 @@
 # Hudson County Investigative Database
 
-* Hosted web-page with a SQLite and Flask backend, allowing a user to explore data merged from four datasets localized to Hudson County, NJ.
+* This [database](https://hudson-county-investigative-db.onrender.com/methodology), is a hosted webpage with a SQLite and Flask backend. It allows a user to explore data merged from four datasets localized to Hudson County, NJ, and is intended for residents, researchers and journalists.
 
 ## THE *WHY* AND *THE PROBLEM* 
 
