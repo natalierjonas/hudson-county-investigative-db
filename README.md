@@ -1,0 +1,15 @@
+# Hudson County Investigative Database
+
+* Hosted web-page with a SQLite and Flask backend, allowing a user to explore data merged from four datasets localized to Hudson County, NJ.
+
+## THE *WHY* AND *THE PROBLEM* 
+
+* Hudson County is the smallest and most densely populated county In New Jersey, home to ¾ of a million people. In Jersey City — referred to as "Wall Street West" by some and home to 3% of the state's population — more than 50% of renters are cost-burdened. New developments now dot the waterfront and are spreading inward into once-undesirable neighborhoods, which are pricing out long-time residents and largely affecting communities of color. Homelessness in Hudson County increased by 24% in 2024, compared to the year prior, the same year a number of new developments opened in Hudson County. Many of these developments allocate around 20% as affordable units.
+
+* Cursory analysis using the database shows that tracts with majority-private ownership of subsidized housing have a median family income of $86,520, which is well below the $125,337 average in tracts with no subsidized housing. Similarly, all "majority privately owned" tracts are in low, moderate, or middle income brackets. Applicants who are people of color and who reside in lower-income tracts are consistently denied loans, particularly in private-owned yet subsidized housing tracts.
+
+* Private owners control half of all subsidized units in Hudson County and mortgage applicants who are low-income or people of color are disproportionately denied loans for such properties as the county gentrifies. "Wall Street West" is the site of a lot of the most drastic change, as white male applicants receive loans easier and move into town. So, the influx of institutional investors into Hudson County seems to be contributing to redlining on the New Jersey Waterfront, forcing Black and Hispanic residents out of their homes while denying mortgage applications.
+
+* A few questions this database intends to answer: Who owns Hudson County's affordable housing? Are low-income residents getting affordable units? Is redlining at play? Which investors and private creditors are most interested in this county? Who is being displaced?
+
+* In essence, this database, intended to be used by residents, researchers or journalistic investigations, can elucidate who is buying up subsidized affordable housing (Section 8, LIHTC, etc.) in a county hit hard by gentrification. A user can search and filter the database to explore ownership type, demographics, income levels as well as where high levels of LLC/private ownership is located. Future database-building and research can address some of the challenges inherent to the data, such as racial and ethnic makeup of census tracts, and finding either more individual-level data to avoid jumping from loan- to census-level.
